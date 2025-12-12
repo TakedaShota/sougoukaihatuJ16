@@ -1,38 +1,32 @@
 <x-app-layout>
-    <div class="max-w-2xl mx-auto p-6">
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            プロフィール
+        </h2>
+    </x-slot>
 
-        <h1 class="text-2xl font-bold mb-6">プロフィール</h1>
+    <div class="py-12">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
 
-        {{-- アバター画像 --}}
-        <div class="flex items-center gap-4 mb-6">
-            @if (Auth::user()->avatar)
-                <img 
-                    src="{{ asset('storage/' . Auth::user()->avatar) }}" 
-                    class="w-24 h-24 rounded-full object-cover border"
-                >
-            @else
-                <div class="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
-                    No Image
-                </div>
-            @endif
+                <h3 class="text-lg font-bold mb-4">基本情報</h3>
 
-            <div>
-                <p class="text-xl font-semibold">
-                    {{ Auth::user()->display_name ?? '未設定' }}
+                <p><strong>名前：</strong> {{ Auth::user()->name }}</p>
+                <p><strong>メール：</strong> {{ Auth::user()->email }}</p>
+
+                <hr class="my-4">
+
+                <h3 class="text-lg font-bold mb-4">プロフィール</h3>
+
+                <p><strong>年齢：</strong> {{ Auth::user()->age ?? '未設定' }}</p>
+                <p><strong>性別：</strong> {{ Auth::user()->gender ?? '未設定' }}</p>
+                <p><strong>趣味：</strong> {{ Auth::user()->hobby ?? '未設定' }}</p>
+                <p><strong>団地名：</strong> {{ Auth::user()->residence ?? '未設定' }}</p>
+                <p><strong>ひとこと：</strong><br>
+                    {{ Auth::user()->bio ?? '未設定' }}
                 </p>
-                <p class="text-gray-500 text-sm">
-                    {{ Auth::user()->email }}
-                </p>
+
             </div>
-        </div>
-
-        <div class="mt-6">
-            <a 
-                href="{{ route('profile.edit') }}" 
-                class="text-indigo-600 hover:text-indigo-800 underline"
-            >
-                プロフィールを編集する
-            </a>
         </div>
     </div>
 </x-app-layout>
