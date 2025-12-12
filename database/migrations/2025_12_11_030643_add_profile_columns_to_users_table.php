@@ -9,24 +9,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->string('icon')->nullable();
+            $table->text('bio')->nullable();
+            $table->string('hobby')->nullable();
             $table->integer('age')->nullable();
-            $table->string('gender', 10)->nullable();
-            $table->string('hobby', 100)->nullable();
-            $table->string('residence', 100)->nullable(); // 団地名
-            $table->text('bio')->nullable(); // 一言メッセージ
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn([
-                'age',
-                'gender',
-                'hobby',
-                'residence',
-                'bio',
-            ]);
+            $table->dropColumn(['icon', 'bio', 'hobby', 'age']);
         });
     }
 };

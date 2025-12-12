@@ -6,25 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // phone を NULL 許可に変更
-            $table->string('phone')->nullable()->change();
+            $table->string('icon')->nullable();      // アイコン画像
+            $table->text('bio')->nullable();         // 自己紹介
+            $table->string('hobby')->nullable();     // 趣味
+            $table->integer('age')->nullable();      // 年齢
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // 元に戻す（NULL 不許可）
-            $table->string('phone')->nullable(false)->change();
+            $table->dropColumn(['icon', 'bio', 'hobby', 'age']);
         });
     }
 };
