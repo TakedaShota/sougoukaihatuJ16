@@ -9,7 +9,15 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow sm:rounded-lg p-8">
 
-                <h3 class="text-2xl font-bold mb-6">メニュー</h3>
+                <h3 class="text-2xl font-bold mb-2">
+                    ようこそ、{{ Auth::user()->name }} さん！
+                </h3>
+
+                <p class="text-gray-600 mb-6">
+                    このページは承認されたユーザーだけが閲覧できます。
+                </p>
+
+                <h3 class="text-xl font-bold mb-6">メニュー</h3>
 
                 <div class="grid grid-cols-3 gap-6">
 

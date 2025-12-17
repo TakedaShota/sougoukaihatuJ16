@@ -1,22 +1,5 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<!-- ヘッダー -->
-<header class="bg-white shadow">
-    <nav class="bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="text-xl font-bold text-gray-800">
-                MyApp
-            </div>
-
-            <div class="flex gap-6 text-gray-700 font-semibold">
-                <a href="{{ route('threads.index') }}" class="hover:text-blue-600">掲示板</a>
-                <a href="#" class="hover:text-blue-600">グループチャット</a>
-                <a href="/profile" class="hover:text-blue-600">プロフィール</a>
-            </div>
-        </div>
-    </nav>
-</header>
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

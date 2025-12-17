@@ -1,58 +1,107 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ThreadController;
-use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ThreadController;
+use App\Http\Controllers\ProfileController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
 // トップページ
 Route::get('/', function () {
     return view('welcome');
 });
 
-// ダッシュボード（ログイン必須）
+// =====================
+// ログイン
+// =====================
+Route::get('/login', [LoginController::class, 'show'])
+    ->name('login');
+
+Route::post('/login', [LoginController::class, 'login'])
+    ->name('login.post');
+
+// =====================
+// ログアウト
+// =====================
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->name('logout');
+
+// =====================
+// ダッシュボード（ログイン + 承認済み）
+// =====================
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'approved'])
+  ->name('dashboard');
 
-// プロフィール関連（ログイン必須）
+// =====================
+// 管理者ルート
+// =====================
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/admin', [AdminController::class, 'index'])
+        ->name('admin.dashboard');
+
+    Route::get('/admin/pending', [AdminController::class, 'pending'])
+        ->name('admin.pending');
+
+    Route::get('/admin/logs', [AdminController::class, 'logs'])
+        ->name('admin.logs');
+
+    Route::post('/admin/approve/{id}', [AdminController::class, 'approve'])
+        ->name('admin.approve');
+
+    Route::post('/admin/reject/{id}', [AdminController::class, 'reject'])
+        ->name('admin.reject');
+});
+
+// =====================
+// 承認待ち画面
+// =====================
+Route::get('/waiting', function () {
+    return view('auth.waiting');
+})->middleware('auth')
+  ->name('waiting');
+
+// =====================
+// プロフィール（ログイン必須）
+// =====================
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-/**
- * 掲示板（threads）ルート
- * 開発環境ではゲスト投稿を許可
- */
-if (app()->environment('local')) {
-    // スレッド一覧・詳細・作成・保存
-    Route::resource('threads', ThreadController::class)->only([
-        'index', 'show', 'create', 'store',
-    ]);
+// =====================
+// 掲示板（ログイン + 承認済み）
+// =====================
+Route::middleware(['auth', 'approved'])->group(function () {
 
-    // コメント投稿（ゲスト投稿可能）
-    Route::post('/threads/{thread}/comments', [CommentController::class, 'store'])
-        ->name('threads.comments.store');
+    Route::get('/threads', [ThreadController::class, 'index'])
+        ->name('threads.index');
 
-    // コメント編集・削除（既存）
-    Route::resource('threads.comments', CommentController::class)
-        ->shallow()
-        ->only(['update', 'destroy']);
+    Route::get('/threads/create', [ThreadController::class, 'create'])
+        ->name('threads.create');
 
-} else {
-    // 本番環境はログイン必須
-    Route::resource('threads', ThreadController::class)->only(['index', 'show']);
+    Route::post('/threads', [ThreadController::class, 'store'])
+        ->name('threads.store');
 
-    Route::middleware('auth')->group(function () {
-        Route::resource('threads', ThreadController::class)
-            ->only(['create', 'store', 'edit', 'update', 'destroy']);
+    Route::get('/threads/{thread}', [ThreadController::class, 'show'])
+        ->name('threads.show');
 
-        Route::resource('threads.comments', CommentController::class)
-            ->shallow()
-            ->only(['store', 'update', 'destroy']);
-    });
-}
+    Route::get('/threads/{thread}/edit', [ThreadController::class, 'edit'])
+        ->name('threads.edit');
 
-require __DIR__.'/auth.php';
+    Route::patch('/threads/{thread}', [ThreadController::class, 'update'])
+        ->name('threads.update');
+
+    Route::delete('/threads/{thread}', [ThreadController::class, 'destroy'])
+        ->name('threads.destroy');
+});
