@@ -1,47 +1,26 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+@extends('layouts.app')
 
-    <form method="POST" action="{{ route('login') }}">
+@section('content')
+<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-bold mb-4">ログイン</h2>
+
+    @if ($errors->any())
+        <div class="bg-red-100 p-3 mb-3 text-red-700 rounded">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
+    <form action="{{ route('login.post') }}" method="POST">
         @csrf
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="phone" :value="__('電話番号')" />
-            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" :value="old('phone')" required autofocus autocomplete="tel" />
-            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-        </div>
+        <label class="block mb-2">電話番号</label>
+        <input type="text" name="phone" class="w-full border p-2 rounded mb-4">
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
+        <button class="bg-blue-500 text-white px-4 py-2 rounded w-full">ログイン</button>
     </form>
-</x-guest-layout>
+
+    <div class="mt-4 text-right">
+        <a href="{{ route('register.form') }}" class="text-blue-600">新規登録</a>
+    </div>
+</div>
+@endsection
