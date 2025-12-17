@@ -2,19 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Thread;
 use Illuminate\Http\Request;
+use App\Models\Thread;
+use App\Models\Comment;
 use Illuminate\Support\Facades\Auth;
 
 class ThreadController extends Controller
 {
     /**
-     * 掲示板一覧
+     * スレッド一覧
      */
     public function index()
     {
-        $threads = Thread::latest()->get();
+        $threads = Thread::with('user')->latest()->paginate(10);
         return view('threads.index', compact('threads'));
+    }
+
+    /**
+     * スレッド詳細
+     */
+    public function show(Thread $thread)
+    {
+        $thread->load('user');
+
+        // 親コメント取得
+        $comments = Comment::where('thread_id', $thread->id)
+            ->whereNull('parent_id')
+            ->with(['replies.user', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('threads.show', compact('thread', 'comments'));
     }
 
     /**
@@ -45,10 +63,36 @@ class ThreadController extends Controller
     }
 
     /**
-     * （後で使う）スレッド詳細
+     * 編集フォーム
      */
-    // public function show(Thread $thread)
-    // {
-    //     return view('threads.show', compact('thread'));
-    // }
+    public function edit(Thread $thread)
+    {
+        return view('threads.edit', compact('thread'));
+    }
+
+    /**
+     * 更新
+     */
+    public function update(Request $request, Thread $thread)
+    {
+        $request->validate([
+            'title' => 'required|max:255',
+            'body'  => 'required',
+        ]);
+
+        $thread->update($request->only('title', 'body'));
+
+        return redirect()->route('threads.show', $thread);
+    }
+
+    /**
+     * 削除
+     */
+    public function destroy(Thread $thread)
+    {
+        $this->authorize('delete', $thread);
+        $thread->delete();
+
+        return redirect()->route('threads.index');
+    }
 }

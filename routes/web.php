@@ -5,6 +5,7 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ThreadController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,21 +13,10 @@ use App\Http\Controllers\ThreadController;
 |--------------------------------------------------------------------------
 */
 
-// =====================
 // トップページ
-// =====================
 Route::get('/', function () {
     return view('welcome');
 });
-
-// =====================
-// 登録
-// =====================
-Route::get('/register', [RegisterController::class, 'showForm'])
-    ->name('register.form');
-
-Route::post('/register', [RegisterController::class, 'register'])
-    ->name('register');
 
 // =====================
 // ログイン
@@ -38,8 +28,13 @@ Route::post('/login', [LoginController::class, 'login'])
     ->name('login.post');
 
 // =====================
-// 一般ユーザー画面
-// （ログイン + 承認済み）
+// ログアウト
+// =====================
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->name('logout');
+
+// =====================
+// ダッシュボード（ログイン + 承認済み）
 // =====================
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -47,23 +42,25 @@ Route::get('/dashboard', function () {
   ->name('dashboard');
 
 // =====================
-// 管理者ルート（★開発用：制限なし★）
-// ※ 本番では必ず auth/admin を付ける
+// 管理者ルート
 // =====================
-Route::get('/admin', [AdminController::class, 'index'])
-    ->name('admin.dashboard');
+Route::middleware(['auth'])->group(function () {
 
-Route::get('/admin/pending', [AdminController::class, 'pending'])
-    ->name('admin.pending');
+    Route::get('/admin', [AdminController::class, 'index'])
+        ->name('admin.dashboard');
 
-Route::get('/admin/logs', [AdminController::class, 'logs'])
-    ->name('admin.logs');
+    Route::get('/admin/pending', [AdminController::class, 'pending'])
+        ->name('admin.pending');
 
-Route::post('/admin/approve/{id}', [AdminController::class, 'approve'])
-    ->name('admin.approve');
+    Route::get('/admin/logs', [AdminController::class, 'logs'])
+        ->name('admin.logs');
 
-Route::post('/admin/reject/{id}', [AdminController::class, 'reject'])
-    ->name('admin.reject');
+    Route::post('/admin/approve/{id}', [AdminController::class, 'approve'])
+        ->name('admin.approve');
+
+    Route::post('/admin/reject/{id}', [AdminController::class, 'reject'])
+        ->name('admin.reject');
+});
 
 // =====================
 // 承認待ち画面
@@ -74,29 +71,37 @@ Route::get('/waiting', function () {
   ->name('waiting');
 
 // =====================
+// プロフィール（ログイン必須）
+// =====================
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// =====================
 // 掲示板（ログイン + 承認済み）
 // =====================
 Route::middleware(['auth', 'approved'])->group(function () {
 
-    // 掲示板一覧
     Route::get('/threads', [ThreadController::class, 'index'])
         ->name('threads.index');
 
-    // スレッド作成画面
     Route::get('/threads/create', [ThreadController::class, 'create'])
         ->name('threads.create');
 
-    // スレッド保存
     Route::post('/threads', [ThreadController::class, 'store'])
         ->name('threads.store');
 
-    // （あとで）スレッド詳細
-    // Route::get('/threads/{thread}', [ThreadController::class, 'show'])
-    //     ->name('threads.show');
-});
+    Route::get('/threads/{thread}', [ThreadController::class, 'show'])
+        ->name('threads.show');
 
-// =====================
-// ログアウト
-// =====================
-Route::post('/logout', [LoginController::class, 'logout'])
-    ->name('logout');
+    Route::get('/threads/{thread}/edit', [ThreadController::class, 'edit'])
+        ->name('threads.edit');
+
+    Route::patch('/threads/{thread}', [ThreadController::class, 'update'])
+        ->name('threads.update');
+
+    Route::delete('/threads/{thread}', [ThreadController::class, 'destroy'])
+        ->name('threads.destroy');
+});
