@@ -8,62 +8,54 @@ use App\Models\User;
 
 class LoginController extends Controller
 {
-    /**
-     * ログイン画面表示
-     */
+    // ログイン画面
     public function show()
     {
         return view('auth.login');
     }
 
-    /**
-     * ログイン処理（開発用：電話番号のみ）
-     */
+    // ログイン処理
     public function login(Request $request)
     {
-        // 電話番号必須チェック
         $request->validate([
-            'phone' => 'required',
+            'phone'       => 'required|digits:11', // 11桁固定
+            'room_number' => 'required|digits:3',  // 3桁固定
         ]);
 
-        // 電話番号でユーザー取得
-        $user = User::where('phone', $request->phone)->first();
+        // 電話番号 + 部屋番号でユーザー検索
+        $user = User::where('phone', $request->phone)
+                    ->where('room_number', $request->room_number)
+                    ->first();
 
-        // ユーザーが存在しない場合
         if (!$user) {
             return back()->withErrors([
-                'login' => '電話番号が登録されていません。',
+                'login' => '電話番号または部屋番号が正しくありません。',
             ]);
         }
 
-        // ログイン
         Auth::login($user);
         $request->session()->regenerate();
 
-        // 承認されていない場合は waiting へ
-        if ($user->is_approved == 0) {
-            return redirect('/waiting');
+        // 承認待ちの場合
+        if (!$user->is_approved) {
+            return redirect()->route('waiting');
         }
 
-        // 管理者なら admin へ（※今は制限なしなので任意）
-        if ($user->is_admin == 1) {
-            return redirect('/admin');
+        // 管理者の場合
+        if ($user->is_admin) {
+            return redirect()->route('admin.dashboard');
         }
 
-        // 一般ユーザーは threads.index
-        return redirect('threads.index');
+        // 通常ユーザー
+        return redirect()->route('dashboard');
     }
 
-    /**
-     * ログアウト
-     */
+    // ログアウト
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
-        return redirect('/login');
+        return redirect()->route('login');
     }
 }
