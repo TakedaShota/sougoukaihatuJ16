@@ -8,64 +8,54 @@ use App\Models\User;
 
 class LoginController extends Controller
 {
-    /**
-     * ログイン画面表示
-     */
+    // ログイン画面
     public function show()
     {
         return view('auth.login');
     }
 
-    /**
-     * ログイン処理（電話番号のみ）
-     */
+    // ログイン処理
     public function login(Request $request)
     {
-        // 電話番号必須チェック
         $request->validate([
-            'phone' => 'required',
+            'phone'       => 'required|digits:11', // 11桁固定
+            'room_number' => 'required|digits:3',  // 3桁固定
         ]);
 
-        // 電話番号でユーザー取得
-        $user = User::where('phone', $request->phone)->first();
+        // 電話番号 + 部屋番号でユーザー検索
+        $user = User::where('phone', $request->phone)
+                    ->where('room_number', $request->room_number)
+                    ->first();
 
-        // ユーザーが存在しない場合
         if (!$user) {
             return back()->withErrors([
-                'login' => '電話番号が登録されていません。',
+                'login' => '電話番号または部屋番号が正しくありません。',
             ]);
         }
 
-        // ログイン
         Auth::login($user);
         $request->session()->regenerate();
 
-        // 🔽 ここから遷移制御（順番が重要）
-
-        // 管理者は admin
-        if ($user->is_admin) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        // 未承認ユーザーは waiting
+        // 承認待ちの場合
         if (!$user->is_approved) {
             return redirect()->route('waiting');
         }
 
-        // 承認済み一般ユーザーは掲示板
-        return redirect()->route('threads.index');
+        // 管理者の場合
+        if ($user->is_admin) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        // 通常ユーザー
+        return redirect()->route('dashboard');
     }
 
-    /**
-     * ログアウト
-     */
+    // ログアウト
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
         return redirect()->route('login');
     }
 }
