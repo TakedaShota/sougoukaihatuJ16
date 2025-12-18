@@ -17,7 +17,7 @@ class LoginController extends Controller
     }
 
     /**
-     * ログイン処理（開発用：電話番号のみ）
+     * ログイン処理（電話番号のみ）
      */
     public function login(Request $request)
     {
@@ -40,18 +40,20 @@ class LoginController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        // 承認されていない場合は waiting へ
-        if ($user->is_approved == 0) {
-            return redirect('/waiting');
+        // 🔽 ここから遷移制御（順番が重要）
+
+        // 管理者は admin
+        if ($user->is_admin) {
+            return redirect()->route('admin.dashboard');
         }
 
-        // 管理者なら admin へ（※今は制限なしなので任意）
-        if ($user->is_admin == 1) {
-            return redirect('/admin');
+        // 未承認ユーザーは waiting
+        if (!$user->is_approved) {
+            return redirect()->route('waiting');
         }
 
-        // 一般ユーザーは threads.index
-        return redirect('threads.index');
+        // 承認済み一般ユーザーは掲示板
+        return redirect()->route('threads.index');
     }
 
     /**
@@ -64,6 +66,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect()->route('login');
     }
 }

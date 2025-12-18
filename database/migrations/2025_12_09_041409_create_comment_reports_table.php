@@ -6,20 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('comment_reports', function (Blueprint $table) {
             $table->id();
+
+            $table->unsignedBigInteger('comment_id');
+            $table->unsignedBigInteger('report_id');
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('comment_reports');

@@ -10,34 +10,35 @@ use Illuminate\Support\Facades\Auth;
 class CommentController extends Controller
 {
     /**
-     * コメント（親コメント or 返信）を保存
+     * コメント（親 or 返信）保存
      */
     public function store(Request $request, Thread $thread)
     {
-        // バリデーション
         $data = $request->validate([
             'body'      => 'required|string|max:1000',
             'parent_id' => 'nullable|exists:comments,id',
         ]);
 
-        // 投稿者（ゲストの場合は null）
-        $userId = Auth::id(); 
-
-        // コメント作成
         Comment::create([
             'thread_id' => $thread->id,
-            'user_id'   => $userId,
+            'user_id'   => Auth::id(),
             'body'      => $data['body'],
             'parent_id' => $data['parent_id'] ?? null,
         ]);
 
-        return redirect()->route('threads.show', $thread)
-                         ->with('status', 'コメントを投稿しました');
+        return redirect()
+            ->route('threads.show', $thread)
+            ->with('status', 'コメントを投稿しました');
     }
+
+    /**
+     * コメント削除
+     */
     public function destroy(Comment $comment)
     {
-        $this->authorize('delete', $comment); // 投稿主のみ
+        $this->authorize('delete', $comment);
         $comment->delete();
-        return redirect()->back()->with('status', 'コメントを削除しました');
+
+        return back()->with('status', 'コメントを削除しました');
     }
 }

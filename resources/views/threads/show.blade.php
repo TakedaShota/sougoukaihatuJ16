@@ -1,84 +1,90 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-3xl mx-auto p-4">
+<div class="max-w-4xl mx-auto p-4 sm:p-6 min-h-screen">
+    <nav class="mb-8">
+        <a href="{{ route('threads.index') }}" class="text-orange-600 font-bold flex items-center hover:underline">
+            ← みんなの募集一覧へ戻る
+        </a>
+    </nav>
 
-    {{-- スレッドのタイトルと本文 --}}
-    <h1 class="text-2xl font-bold mb-2">{{ $thread->title }}</h1>
-    <p class="mb-4">{{ $thread->body }}</p>
+    {{-- スレッド本体 --}}
+    <div class="bg-white rounded-3xl shadow-lg border border-orange-50 overflow-hidden mb-10">
+        <div class="bg-gradient-to-r from-orange-400 to-yellow-400 h-3"></div>
 
-    {{-- コメント投稿フォーム --}}
-    <div class="mb-6 p-4 bg-gray-100 rounded">
-        <form action="{{ route('threads.comments.store', $thread) }}" method="POST">
-            @csrf
-            {{-- スレッドID（hidden） --}}
-            <input type="hidden" name="thread_id" value="{{ $thread->id }}">
+        <div class="p-8">
+            <h1 class="text-3xl font-black text-gray-800 mb-6 leading-tight">
+                {{ $thread->title }}
+            </h1>
+            
+            <div class="bg-orange-50 rounded-2xl p-6 mb-8 text-xl text-gray-700 leading-loose whitespace-pre-wrap border-l-8 border-orange-200">
+                {{ $thread->body }}
+            </div>
 
-            <textarea name="body" rows="3" placeholder="コメントを書く..." required
-                class="w-full px-3 py-2 border rounded mb-2"></textarea>
-
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
-                コメント投稿
-            </button>
-        </form>
+            {{-- 投稿者情報 --}}
+            <div class="flex items-center justify-between text-gray-400">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-3 text-2xl">
+                        👤
+                    </div>
+                    <span class="font-bold text-gray-600">
+                        {{ $thread->user->name ?? '名無しさん' }}
+                    </span>
+                </div>
+                <span>{{ $thread->created_at->format('Y/m/d') }}</span>
+            </div>
+        </div>
     </div>
 
-    <h3 class="text-xl font-semibold mb-3">コメント一覧</h3>
+    {{-- コメント・参加希望 --}}
+    <section class="space-y-6">
+        <h3 class="text-2xl font-bold text-gray-800">
+            参加希望・お問い合わせ
+        </h3>
 
-    @php
-        // 親コメントだけ取得し、リレーションで子コメントも取得
-        $comments = $thread->comments()->with('user', 'replies.user')->latest()->get();
-    @endphp
-
-    @forelse ($comments as $comment)
-        <div class="border-b pb-3 mb-3">
-            <p class="mb-1">{{ $comment->body }}</p>
-            <small class="text-gray-600">
-                投稿者: {{ $comment->user->name ?? '匿名' }} |
-                {{ $comment->created_at->format('Y-m-d H:i') }}
-            </small>
-
-            {{-- コメント削除ボタン（投稿者のみ） --}}
-            @can('delete', $comment)
-            <form action="{{ route('comments.destroy', $comment) }}" method="POST" onsubmit="return confirm('コメントを削除しますか？');">
+        {{-- コメント投稿 --}}
+        <div class="bg-white rounded-2xl p-6 border-2 border-orange-400 shadow-md">
+            <form action="{{ route('threads.comments.store', $thread) }}" method="POST">
                 @csrf
-                @method('DELETE')
-                <button type="submit" class="text-red-500">削除</button>
+                <label class="block text-gray-700 font-black text-lg mb-3">
+                    「一緒にやりたい！」とお返事してみる
+                </label>
+                <textarea name="body" rows="3" required
+                    placeholder="例：私も囲碁が好きです！ぜひ一度ご一緒させてください。"
+                    class="w-full px-4 py-4 rounded-xl border-gray-200 focus:ring-orange-500 shadow-inner text-lg mb-4"></textarea>
+
+                <button type="submit"
+                    class="w-full bg-orange-500 text-white font-black py-4 rounded-xl text-xl shadow-lg hover:bg-orange-600 transition">
+                    お返事（参加希望）を送る
+                </button>
             </form>
-            @endcan
-
-            {{-- 返信があれば表示 --}}
-            @foreach ($comment->replies as $reply)
-                <div class="ml-4 mt-2 p-2 bg-gray-50 border-l">
-                    <p class="mb-1">{{ $reply->body }}</p>
-                    <small class="text-gray-500">
-                        投稿者: {{ $reply->user->name ?? '匿名' }} |
-                        {{ $reply->created_at->format('Y-m-d H:i') }}
-                    </small>
-
-                    {{-- 返信削除ボタン（投稿者のみ） --}}
-                    @can('delete', $reply)
-                    <form action="{{ route('comments.destroy', $reply) }}" method="POST" onsubmit="return confirm('コメントを削除しますか？');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-red-500">削除</button>
-                    </form>
-                    @endcan
-                </div>
-            @endforeach
         </div>
-    @empty
-        <p class="text-gray-500">まだコメントはありません。</p>
-    @endforelse
 
-    {{-- スレッド削除ボタン（投稿者のみ） --}}
-    @can('delete', $thread)
-    <form action="{{ route('threads.destroy', $thread) }}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded">スレッドを削除</button>
-    </form>
-    @endcan
-
+        {{-- コメント一覧 --}}
+        <div class="space-y-4">
+            @forelse ($thread->comments as $comment)
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 flex gap-4">
+                    <div class="shrink-0 text-3xl">🙋‍♂️</div>
+                    <div>
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="font-bold text-gray-800">
+                                {{ $comment->user->name ?? '名無しさん' }}
+                            </span>
+                            <span class="text-xs text-gray-400">
+                                {{ $comment->created_at->diffForHumans() }}
+                            </span>
+                        </div>
+                        <p class="text-gray-700 text-lg">
+                            {{ $comment->body }}
+                        </p>
+                    </div>
+                </div>
+            @empty
+                <p class="text-gray-400 text-center">
+                    まだコメントはありません。
+                </p>
+            @endforelse
+        </div>
+    </section>
 </div>
 @endsection

@@ -6,6 +6,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ThreadController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CommentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,13 +14,24 @@ use App\Http\Controllers\ProfileController;
 |--------------------------------------------------------------------------
 */
 
+// =====================
 // トップページ
+// =====================
 Route::get('/', function () {
     return view('welcome');
 });
 
 // =====================
-// ログイン
+// 新規登録
+// =====================
+Route::get('/register', [RegisterController::class, 'show'])
+    ->name('register.form');
+
+Route::post('/register', [RegisterController::class, 'store'])
+    ->name('register.store');
+
+// =====================
+// ログイン / ログアウト
 // =====================
 Route::get('/login', [LoginController::class, 'show'])
     ->name('login');
@@ -27,14 +39,19 @@ Route::get('/login', [LoginController::class, 'show'])
 Route::post('/login', [LoginController::class, 'login'])
     ->name('login.post');
 
-// =====================
-// ログアウト
-// =====================
 Route::post('/logout', [LoginController::class, 'logout'])
     ->name('logout');
 
 // =====================
-// ダッシュボード（ログイン + 承認済み）
+// 承認待ち画面
+// =====================
+Route::get('/waiting', function () {
+    return view('auth.waiting');
+})->middleware('auth')
+  ->name('waiting');
+
+// =====================
+// ダッシュボード（使うなら）
 // =====================
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -42,9 +59,9 @@ Route::get('/dashboard', function () {
   ->name('dashboard');
 
 // =====================
-// 管理者ルート
+// 管理者
 // =====================
-Route::middleware(['auth'])->group(function () {
+Route::middleware('auth')->group(function () {
 
     Route::get('/admin', [AdminController::class, 'index'])
         ->name('admin.dashboard');
@@ -63,27 +80,26 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // =====================
-// 承認待ち画面
-// =====================
-Route::get('/waiting', function () {
-    return view('auth.waiting');
-})->middleware('auth')
-  ->name('waiting');
-
-// =====================
-// プロフィール（ログイン必須）
+// プロフィール
 // =====================
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 });
 
 // =====================
-// 掲示板（ログイン + 承認済み）
+// 掲示板（threads + comments）
 // =====================
 Route::middleware(['auth', 'approved'])->group(function () {
 
+    // スレッド
     Route::get('/threads', [ThreadController::class, 'index'])
         ->name('threads.index');
 
@@ -104,4 +120,11 @@ Route::middleware(['auth', 'approved'])->group(function () {
 
     Route::delete('/threads/{thread}', [ThreadController::class, 'destroy'])
         ->name('threads.destroy');
+
+    // コメント
+    Route::post('/threads/{thread}/comments', [CommentController::class, 'store'])
+        ->name('threads.comments.store');
+
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])
+        ->name('comments.destroy');
 });
