@@ -8,69 +8,77 @@ use App\Models\Comment;
 
 class ThreadController extends Controller
 {
-    // スレッド一覧
-    public function index() {
-        $threads = Thread::with('user')->latest()->paginate(10);
+    // 一覧
+    public function index()
+    {
+        $threads = Thread::withCount('comments')
+            ->latest()
+            ->paginate(10);
+
         return view('threads.index', compact('threads'));
     }
 
-    // スレッド詳細
+    // 詳細
     public function show(Thread $thread)
     {
-        $thread->load('user');
-
-        // 親コメント取得
         $comments = Comment::where('thread_id', $thread->id)
             ->whereNull('parent_id')
-            ->with(['replies.user', 'user'])
-            ->orderBy('created_at', 'desc')
+            ->latest()
             ->get();
 
         return view('threads.show', compact('thread', 'comments'));
     }
 
-    // 作成フォーム
-    public function create() {
+    // 作成画面
+    public function create()
+    {
         return view('threads.create');
     }
 
-    // 保存
-    public function store(Request $request) {
+    // 保存（写真＋興味あり）
+    public function store(Request $request)
+    {
         $request->validate([
-            'title' => 'required|max:255',
-            'body' => 'required',
+            'title'           => 'required|max:255',
+            'body'            => 'required',
+            'image'           => 'nullable|image|max:2048',
+            'enable_interest' => 'nullable|boolean',
         ]);
+
+        $path = null;
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('threads', 'public');
+        }
 
         Thread::create([
-            'title' => $request->title,
-            'body' => $request->body,
-            'user_id' => auth()->id(),
+            'title'           => $request->title,
+            'body'            => $request->body,
+            'image'           => $path,
+            // ✅ booleanとして正しく保存
+            'enable_interest' => $request->boolean('enable_interest'),
+            'interest_count'  => 0,
         ]);
 
         return redirect()->route('threads.index');
     }
 
-    // 編集フォーム
-    public function edit(Thread $thread) {
-        return view('threads.edit', compact('thread'));
-    }
-
-    // 更新
-    public function update(Request $request, Thread $thread) {
-        $request->validate([
-            'title' => 'required|max:255',
-            'body' => 'required',
-        ]);
-
-        $thread->update($request->only('title','body'));
-
-        return redirect()->route('threads.show', $thread);
-    }
-
-    // 削除
-    public function destroy(Thread $thread) {
-        $this->authorize('delete', $thread); // 投稿主のみ
+    // 削除（開発中：誰でもOK）
+    public function destroy(Thread $thread)
+    {
         $thread->delete();
         return redirect()->route('threads.index');
+    }
+
+    // 興味ありボタン
+    public function interest(Thread $thread)
+    {
+        // 念のためガード
+        if (!$thread->enable_interest) {
+            return back();
+        }
+
+        $thread->increment('interest_count');
+
+        return back();
     }
 }

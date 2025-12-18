@@ -6,15 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Thread extends Model
 {
-    protected $fillable = ['title', 'body', 'user_id'];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    protected $fillable = [
+        'title',
+        'body',
+        'image',
+        'user_id',
+        'enable_interest',
+        'interest_count',
+    ];
 
     public function comments()
     {
-        return $this->hasMany(Comment::class)->with('replies');
+        return $this->hasMany(Comment::class);
     }
 }

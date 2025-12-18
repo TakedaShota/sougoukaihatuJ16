@@ -15,29 +15,32 @@ class CommentController extends Controller
     public function store(Request $request, Thread $thread)
     {
         // バリデーション
-        $data = $request->validate([
+        $validated = $request->validate([
             'body'      => 'required|string|max:1000',
             'parent_id' => 'nullable|exists:comments,id',
         ]);
 
-        // 投稿者（ゲストの場合は null）
-        $userId = Auth::id(); 
-
-        // コメント作成
         Comment::create([
             'thread_id' => $thread->id,
-            'user_id'   => $userId,
-            'body'      => $data['body'],
-            'parent_id' => $data['parent_id'] ?? null,
+            'user_id'   => Auth::id(), // ゲストは null
+            'body'      => $validated['body'],
+            'parent_id' => $validated['parent_id'] ?? null,
         ]);
 
-        return redirect()->route('threads.show', $thread)
-                         ->with('status', 'コメントを投稿しました');
+        return redirect()
+            ->route('threads.show', $thread)
+            ->with('status', 'コメントを投稿しました');
     }
+
+    /**
+     * コメント削除（今は制限なし：開発用）
+     */
     public function destroy(Comment $comment)
     {
-        $this->authorize('delete', $comment); // 投稿主のみ
         $comment->delete();
-        return redirect()->back()->with('status', 'コメントを削除しました');
+
+        return redirect()
+            ->back()
+            ->with('status', 'コメントを削除しました');
     }
 }
