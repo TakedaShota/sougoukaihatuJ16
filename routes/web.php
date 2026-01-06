@@ -4,6 +4,15 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ThreadController;
 use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ChatController;
+
+Route::get('/chat', function () {
+    return view('chat');
+});
+
+Route::post('/chat/send', [ChatController::class, 'send']);
+
+Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store']);
 
 // トップページ
 Route::get('/', function () {
