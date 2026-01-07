@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Thread extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'title',
         'body',
@@ -14,6 +17,11 @@ class Thread extends Model
         'enable_interest',
         'interest_count',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function comments()
     {

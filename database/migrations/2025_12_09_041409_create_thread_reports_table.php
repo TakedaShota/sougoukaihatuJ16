@@ -6,25 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('threads', function (Blueprint $table) {
+        Schema::create('thread_reports', function (Blueprint $table) {
             $table->id();
-            $table->string('title');  // スレッドのタイトル
-            $table->text('body');     // スレッドの本文
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // 作成者
+
+            $table->unsignedBigInteger('thread_id');
+            $table->unsignedBigInteger('report_id');
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('threads');
+        Schema::dropIfExists('thread_reports');
     }
 };

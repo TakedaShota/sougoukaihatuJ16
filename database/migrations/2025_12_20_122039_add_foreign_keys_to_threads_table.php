@@ -9,18 +9,24 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('threads', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id')->nullable()->change();
+            // threads.user_id → users.id
+            $table->foreign('user_id')
+                  ->references('id')
+                  ->on('users')
+                  ->nullOnDelete();
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::table('threads', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id')->nullable(false)->change();
+            $table->dropForeign(['user_id']);
         });
     }
-
 };

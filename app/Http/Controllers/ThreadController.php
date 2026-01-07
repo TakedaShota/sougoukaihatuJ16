@@ -5,20 +5,26 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Thread;
 use App\Models\Comment;
+use Illuminate\Support\Facades\Auth;
 
 class ThreadController extends Controller
 {
-    // 一覧
+    /**
+     * スレッド一覧
+     */
     public function index()
     {
-        $threads = Thread::withCount('comments')
+        $threads = Thread::with('user')
+            ->withCount('comments')
             ->latest()
             ->paginate(10);
 
         return view('threads.index', compact('threads'));
     }
 
-    // 詳細
+    /**
+     * スレッド詳細
+     */
     public function show(Thread $thread)
     {
         $comments = Comment::where('thread_id', $thread->id)
@@ -29,18 +35,22 @@ class ThreadController extends Controller
         return view('threads.show', compact('thread', 'comments'));
     }
 
-    // 作成画面
+    /**
+     * スレッド作成画面
+     */
     public function create()
     {
         return view('threads.create');
     }
 
-    // 保存（写真＋興味あり）
+    /**
+     * スレッド保存
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'title'           => 'required|max:255',
-            'body'            => 'required',
+            'title'           => 'required|string|max:255',
+            'body'            => 'required|string',
             'image'           => 'nullable|image|max:2048',
             'enable_interest' => 'nullable|boolean',
         ]);
@@ -54,7 +64,7 @@ class ThreadController extends Controller
             'title'           => $request->title,
             'body'            => $request->body,
             'image'           => $path,
-            // ✅ booleanとして正しく保存
+            'user_id'         => Auth::id(),
             'enable_interest' => $request->boolean('enable_interest'),
             'interest_count'  => 0,
         ]);
@@ -62,17 +72,46 @@ class ThreadController extends Controller
         return redirect()->route('threads.index');
     }
 
-    // 削除（開発中：誰でもOK）
+    /**
+     * 編集画面
+     */
+    public function edit(Thread $thread)
+    {
+        return view('threads.edit', compact('thread'));
+    }
+
+    /**
+     * 更新
+     */
+    public function update(Request $request, Thread $thread)
+    {
+        $request->validate([
+            'title' => 'required|max:255',
+            'body'  => 'required',
+        ]);
+
+        $thread->update($request->only('title', 'body'));
+
+        return redirect()->route('threads.show', $thread);
+    }
+
+    /**
+     * 削除
+     */
     public function destroy(Thread $thread)
     {
+        $this->authorize('delete', $thread);
+
         $thread->delete();
+
         return redirect()->route('threads.index');
     }
 
-    // 興味ありボタン
+    /**
+     * 興味あり
+     */
     public function interest(Thread $thread)
     {
-        // 念のためガード
         if (!$thread->enable_interest) {
             return back();
         }

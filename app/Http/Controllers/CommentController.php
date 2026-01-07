@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class CommentController extends Controller
 {
     /**
-     * コメント（親コメント or 返信）を保存
+     * コメント（親 or 返信）保存
      */
     public function store(Request $request, Thread $thread)
     {
@@ -33,14 +33,15 @@ class CommentController extends Controller
     }
 
     /**
-     * コメント削除（今は制限なし：開発用）
+     * コメント削除
      */
     public function destroy(Comment $comment)
     {
+        // 権限チェック（本人 or 管理者想定）
+        $this->authorize('delete', $comment);
+
         $comment->delete();
 
-        return redirect()
-            ->back()
-            ->with('status', 'コメントを削除しました');
+        return back()->with('status', 'コメントを削除しました');
     }
 }
