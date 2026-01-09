@@ -3,40 +3,37 @@
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageSent implements ShouldBroadcastNow
+class MessageSent implements ShouldBroadcast
 {
-    use SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public string $message;
     public string $senderId;
     public string $senderName;
+    public ?string $message;
+    public array $imageUrls;
 
-    public function __construct(string $message, string $senderId, string $senderName)
-    {
-        $this->message    = $message;
-        $this->senderId   = $senderId;
-        $this->senderName = $senderName;
-    }
+    public function __construct($message, $senderId, $senderName, $imageUrls = [])
+{
+    $this->message = $message;
+    $this->senderId = $senderId;
+    $this->senderName = $senderName;
+    $this->imageUrls = $imageUrls;
+}
 
-    public function broadcastOn(): Channel
+    public function broadcastOn()
     {
         return new Channel('chat');
     }
 
-    public function broadcastAs(): string
+    public function broadcastAs()
     {
         return 'message.sent';
     }
-
-    public function broadcastWith(): array
-    {
-        return [
-            'message'    => $this->message,
-            'senderId'   => $this->senderId,
-            'senderName' => $this->senderName,
-        ];
-    }
 }
+
+
