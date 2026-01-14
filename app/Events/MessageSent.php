@@ -12,18 +12,25 @@ class MessageSent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public string $senderId;
+    public ?int $userId;
+    public ?string $guestId;
     public string $senderName;
     public ?string $message;
     public array $imageUrls;
 
-    public function __construct($message, $senderId, $senderName, $imageUrls = [])
-{
-    $this->message = $message;
-    $this->senderId = $senderId;
-    $this->senderName = $senderName;
-    $this->imageUrls = $imageUrls;
-}
+    public function __construct(
+        ?int $userId,
+        ?string $guestId,
+        string $senderName,
+        ?string $message,
+        array $imageUrls = []
+    ) {
+        $this->userId     = $userId;
+        $this->guestId    = $guestId;
+        $this->senderName = $senderName;
+        $this->message    = $message;
+        $this->imageUrls  = $imageUrls;
+    }
 
     public function broadcastOn()
     {
@@ -34,6 +41,15 @@ class MessageSent implements ShouldBroadcast
     {
         return 'message.sent';
     }
+
+    public function broadcastWith()
+    {
+        return [
+            'userId'     => $this->userId,
+            'guestId'    => $this->guestId,
+            'senderName' => $this->senderName,
+            'message'    => $this->message,
+            'imageUrls'  => $this->imageUrls,
+        ];
+    }
 }
-
-

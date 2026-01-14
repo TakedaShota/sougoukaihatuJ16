@@ -11,7 +11,48 @@
 
         <!-- メッセージ表示 -->
         <div id="chat-box" class="flex-1 overflow-y-auto px-4 py-2">
-            <ul id="messages" class="space-y-3"></ul>
+            <ul id="messages" class="space-y-3">
+             
+@foreach($messages as $msg)
+@php
+    $isMine = $msg->guest_id === $guestId;
+@endphp
+
+
+<li class="flex {{ $isMine ? 'justify-end' : 'justify-start' }}">
+    <div class="max-w-[70%] px-3 py-2 rounded-lg text-sm
+        {{ $isMine ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900' }}">
+
+        @if(!$isMine)
+            <div class="text-xs opacity-70 mb-1">
+                {{ $msg->sender_name }}
+            </div>
+        @endif
+
+        @if($msg->message)
+            <div class="whitespace-pre-wrap break-words">{{ $msg->message }}</div>
+        @endif
+
+        @foreach($msg->images as $img)
+            <img
+                src="{{ $img->image_url }}"
+                class="mt-2 rounded-lg max-w-full cursor-pointer"
+                onclick="window.open('{{ $img->image_url }}','_blank')"
+            >
+        @endforeach
+    </div>
+</li>
+
+<!-- debug -->
+<div class="text-xs text-red-500">
+    msg_guest: {{ $msg->guest_id }} /
+    my_guest: {{ $guestId }}
+</div>
+
+@endforeach
+
+
+            </ul>
         </div>
 
         <!-- 入力フォーム -->
@@ -62,6 +103,15 @@
 
 @push('scripts')
 <script>
+    function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[2]) : null;
+}
+
+window.myGuestId = getCookie('guest_id');
+window.myUserId  = @json(auth()->id());
+
+    
 document.addEventListener('DOMContentLoaded', () => {
 
     const form        = document.getElementById('message-form');
@@ -69,13 +119,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageInp    = document.getElementById('image-input');
     const previewBox  = document.getElementById('image-preview');
     const messages    = document.getElementById('messages');
-    const chatBox     = document.getElementById('chat-box');
+    const chatBox = document.getElementById('chat-box');
 
-    const myId   = "{{ session()->getId() }}";
+    // ★ これを追加
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    
+
+
     const myName = "{{ auth()->check() ? auth()->user()->name : 'ゲスト' }}";
 
     let selectedImages = [];
 
+    
     /* ==========================
         画像選択 → プレビュー
     ========================== */
@@ -116,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const dt = new DataTransfer();
         selectedImages.forEach(f => dt.items.add(f));
         imageInp.files = dt.files;
-        imageInp.dispatchEvent(new Event('change'));
     }
 
     /* ==========================
@@ -124,41 +179,45 @@ document.addEventListener('DOMContentLoaded', () => {
     ========================== */
     function appendMessage(name, text, imageUrls, isMine) {
 
-        const li = document.createElement('li');
-        li.className = `flex ${isMine ? 'justify-end' : 'justify-start'}`;
+    const li = document.createElement('li');
+    li.className = `flex ${isMine ? 'justify-end' : 'justify-start'}`;
 
-        const bubble = document.createElement('div');
-        bubble.className = `
-            relative max-w-[70%] px-3 py-2 rounded-lg text-sm
-            ${isMine ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}
-        `;
+    const bubble = document.createElement('div');
+    bubble.className = `
+        relative max-w-[70%] px-3 py-2 rounded-lg text-sm
+        ${isMine ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}
+    `;
 
+    // ✅ ★ここ（name がある時だけ表示）
+    if (name) {
         const nameDiv = document.createElement('div');
         nameDiv.className = 'text-xs opacity-70 mb-1';
         nameDiv.textContent = name;
         bubble.appendChild(nameDiv);
-
-        if (text) {
-            const textDiv = document.createElement('div');
-            textDiv.className = 'whitespace-pre-wrap break-words';
-            textDiv.textContent = text;
-            bubble.appendChild(textDiv);
-        }
-
-        if (imageUrls?.length) {
-            imageUrls.forEach(url => {
-                const img = document.createElement('img');
-                img.src = url;
-                img.className = 'mt-2 rounded-lg max-w-full cursor-pointer';
-                img.onclick = () => window.open(url, '_blank');
-                bubble.appendChild(img);
-            });
-        }
-
-        li.appendChild(bubble);
-        messages.appendChild(li);
-        chatBox.scrollTop = chatBox.scrollHeight;
     }
+
+    if (text) {
+        const textDiv = document.createElement('div');
+        textDiv.className = 'whitespace-pre-wrap break-words';
+        textDiv.textContent = text;
+        bubble.appendChild(textDiv);
+    }
+
+    if (imageUrls?.length) {
+        imageUrls.forEach(url => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'mt-2 rounded-lg max-w-full cursor-pointer';
+            img.onclick = () => window.open(url, '_blank');
+            bubble.appendChild(img);
+        });
+    }
+
+    li.appendChild(bubble);
+    messages.appendChild(li);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
 
     /* ==========================
         送信
@@ -171,55 +230,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!text && images.length === 0) return;
 
-    // 自分は即表示
     appendMessage(
-        myName,
-        text || null,
-        images.map(img => URL.createObjectURL(img)),
-        true
-    );
+    null, // ← 自分の名前は渡さない
+    text || null,
+    images.map(img => URL.createObjectURL(img)),
+    true
+);
 
     const formData = new FormData();
-    formData.append('sender_id', myId);
-    if (text) formData.append('message', text);
-    images.forEach(img => formData.append('images[]', img));
+if (text) formData.append('message', text);
+images.forEach(img => formData.append('images[]', img));
 
     input.value = '';
 
     try {
         await axios.post('/chat/send', formData);
-
-        // ✅ ここが超重要
         resetImageSelection();
-
-
     } catch (err) {
         console.error(err);
     }
 });
 
+
+function resetImageSelection() {
+    selectedImages = [];
+    imageInp.value = '';
+    imageInp.type = 'text';
+    imageInp.type = 'file';
+
+    previewBox.innerHTML = '';
+    previewBox.classList.add('hidden');
+}
+
     /* ==========================
         受信（自分は無視）
     ========================== */
-    window.Echo.channel('chat')
-    .listen('.message.sent', (e) => {
+ window.Echo.channel('chat')
+.listen('.message.sent', (e) => {
 
-        if (e.senderId === myId) return;
+    const isMine =
+    (e.userId && Number(e.userId) === Number(window.myUserId)) ||
+    (e.guestId && e.guestId === window.myGuestId);
 
-        appendMessage(
+if (isMine) return;
+
+
+
+    appendMessage(
         e.senderName,
-        e.message,
-        e.imageUrls ?? [],   // ← 必ず配列
+        e.message ?? null,
+        e.imageUrls ?? [],
         false
-        );
-    });
-
-        function resetImageSelection() {
-            selectedImages = [];
-            imageInp.value = '';
-            previewBox.innerHTML = '';
-            previewBox.classList.add('hidden');
-        }
+    );
+});
 
 });
 </script>

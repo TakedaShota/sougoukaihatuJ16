@@ -6,11 +6,13 @@ use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
 
-Route::get('/chat', function () {
-    return view('chat');
-});
+// ★ 表示用
+Route::get('/chat', [ChatController::class, 'index']);
 
+// ★ 送信用
 Route::post('/chat/send', [ChatController::class, 'send']);
+
+
 
 Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store']);
 
