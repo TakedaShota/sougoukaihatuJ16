@@ -1,67 +1,40 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ThreadController;
-use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
 // トップページ
 Route::get('/', function () {
     return view('welcome');
 });
 
-// ダッシュボード（ログイン必須）
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-// プロフィール関連（ログイン必須）
+// 認証が必要なルート
 Route::middleware('auth')->group(function () {
 
-    // プロフィール閲覧ページ
-    Route::get('/profile/show', function () {
-        return view('profile.show');
-    })->name('profile.show');
+    // ダッシュボード
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
 
-    // Breeze 標準
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // 掲示板（仮）
+    Route::get('/threads', function () {
+        return '掲示板（準備中）';
+    })->name('threads.index');
+
+    // プロフィール編集
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    // プロフィール更新
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
 });
 
-/**
- * 掲示板（threads）ルート
- * 開発環境ではゲスト投稿を許可
- */
-if (app()->environment('local')) {
-
-    // スレッド一覧・詳細・作成・保存
-    Route::resource('threads', ThreadController::class)->only([
-        'index', 'show', 'create', 'store',
-    ]);
-
-    // コメント投稿（ゲスト投稿可能）
-    Route::post('/threads/{thread}/comments', [CommentController::class, 'store'])
-        ->name('threads.comments.store');
-
-    // コメント編集・削除（既存）
-    Route::resource('threads.comments', CommentController::class)
-        ->shallow()
-        ->only(['update', 'destroy']);
-
-} else {
-
-    // 本番環境はログイン必須
-    Route::resource('threads', ThreadController::class)->only(['index', 'show']);
-
-    Route::middleware('auth')->group(function () {
-        Route::resource('threads', ThreadController::class)
-            ->only(['create', 'store', 'edit', 'update', 'destroy']);
-
-        Route::resource('threads.comments', CommentController::class)
-            ->shallow()
-            ->only(['store', 'update', 'destroy']);
-    });
-}
-
+// Breeze 認証
 require __DIR__.'/auth.php';

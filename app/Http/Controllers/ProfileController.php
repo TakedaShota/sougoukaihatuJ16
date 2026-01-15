@@ -2,19 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * プロフィール編集画面
      */
-    public function edit(Request $request): View
+    public function edit(Request $request)
     {
         return view('profile.edit', [
             'user' => $request->user(),
@@ -22,39 +18,31 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * プロフィール更新
+     * 保存後はダッシュボードへ遷移
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request)
     {
-        $request->user()->fill($request->validated());
+        $user = Auth::user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
-    }
-
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
+        // バリデーション
+        $validated = $request->validate([
+            'bio'   => ['nullable', 'string', 'max:1000'],
+            'hobby' => ['nullable', 'string', 'max:255'],
+            'age'   => ['nullable', 'integer', 'min:0', 'max:120'],
+            'icon'  => ['nullable', 'image', 'max:2048'],
         ]);
 
-        $user = $request->user();
+        // アイコン保存
+        if ($request->hasFile('icon')) {
+            $path = $request->file('icon')->store('icons', 'public');
+            $validated['icon'] = $path;
+        }
 
-        Auth::logout();
+        // DB更新
+        $user->update($validated);
 
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        // ✅ 保存後は必ずダッシュボードへ
+        return redirect()->route('dashboard');
     }
 }
