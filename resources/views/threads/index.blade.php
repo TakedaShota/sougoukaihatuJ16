@@ -24,20 +24,23 @@
     {{-- 投稿一覧 --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         @forelse($threads as $thread)
-            <div class="bg-white border-2 border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-2xl transition-all relative overflow-hidden group">
+
+            {{-- カード全体をリンク化 --}}
+            <a href="{{ route('threads.show', $thread) }}"
+               class="block bg-white border-2 border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-2xl transition-all relative overflow-hidden group">
 
                 {{-- 新着 --}}
                 @if($thread->created_at->gt(now()->subHour()))
-                    <span class="absolute top-4 left-4 bg-red-600 text-white text-xs px-3 py-1 rounded-full">
+                    <span class="absolute top-4 right-4 z-10
+                        bg-red-600 text-white text-xs font-bold
+                        px-3 py-1 rounded-full shadow">
                         新着
                     </span>
                 @endif
 
                 {{-- タイトル --}}
                 <h2 class="text-2xl font-bold text-gray-800 mb-3 group-hover:text-orange-600 transition">
-                    <a href="{{ route('threads.show', $thread) }}">
-                        {{ $thread->title }}
-                    </a>
+                    {{ $thread->title }}
                 </h2>
 
                 {{-- 日時・コメント数 --}}
@@ -49,13 +52,12 @@
                 {{-- 画像 --}}
                 @if($thread->image)
                     <img src="{{ asset('storage/'.$thread->image) }}"
-                         class="rounded-xl mb-4 max-h-48 object-cover cursor-pointer"
-                         onclick="window.open(this.src, '_blank')">
+                         class="rounded-xl mb-4 max-h-48 w-full object-cover">
                 @endif
 
                 {{-- 本文 --}}
                 <p class="text-gray-700 leading-relaxed line-clamp-3 mb-6">
-                    {{ Str::limit($thread->body, 120) }}
+                    {{ \Illuminate\Support\Str::limit($thread->body, 120) }}
                 </p>
 
                 <div class="flex justify-end">
@@ -63,7 +65,9 @@
                         詳しく見る →
                     </span>
                 </div>
-            </div>
+
+            </a>
+
         @empty
             <div class="col-span-full text-center py-20 bg-white rounded-3xl border-4 border-dotted border-gray-100">
                 <p class="text-2xl text-gray-400 font-bold">

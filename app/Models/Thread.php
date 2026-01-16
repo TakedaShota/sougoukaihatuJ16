@@ -27,4 +27,10 @@ class Thread extends Model
     {
         return $this->hasMany(Comment::class);
     }
+
+    public function interestedUsers()
+    {
+        return $this->belongsToMany(User::class, 'thread_user_interest')
+                    ->withTimestamps();
+    }
 }

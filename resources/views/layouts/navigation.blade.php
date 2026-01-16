@@ -5,7 +5,11 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ auth()->check() ? (auth()->user()->is_admin ? route('admin.dashboard') : route('waiting')) : url('/') }}">
+                    <a href="{{ auth()->check() 
+                                ? (auth()->user()->is_admin 
+                                    ? route('admin.dashboard') 
+                                    : route('waiting')) 
+                                : url('/') }}">
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
                     </a>
                 </div>
@@ -13,15 +17,20 @@
                 <!-- Navigation Links -->
                 @auth
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <!-- ダッシュボードリンクは全員 -->
                     <x-nav-link :href="auth()->user()->is_admin ? route('admin.dashboard') : route('waiting')"
                                 :active="request()->routeIs('admin.dashboard') || request()->routeIs('waiting')">
                         ダッシュボード
                     </x-nav-link>
 
-                    <x-nav-link :href="route('threads.index')" :active="request()->routeIs('threads.*')">
-                        掲示板
-                    </x-nav-link>
+                    <!-- 掲示板リンクは承認済みユーザーのみ -->
+                    @if(auth()->user()->is_admin || auth()->user()->is_approved)
+                        <x-nav-link :href="route('threads.index')" :active="request()->routeIs('threads.*')">
+                            掲示板
+                        </x-nav-link>
+                    @endif
 
+                    <!-- 管理者リンクは管理者のみ -->
                     @if(auth()->user()->is_admin)
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                             管理者ページ
@@ -94,13 +103,13 @@
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="auth()->user()->is_admin ? route('admin.dashboard') : route('waiting')">
-                    ダッシュボード
-                </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('threads.index')">
-                    掲示板
-                </x-responsive-nav-link>
+                <!-- 掲示板リンクは承認済みユーザーのみ -->
+                @if(auth()->user()->is_admin || auth()->user()->is_approved)
+                    <x-responsive-nav-link :href="route('threads.index')">
+                        掲示板
+                    </x-responsive-nav-link>
+                @endif
 
                 @if(auth()->user()->is_admin)
                     <x-responsive-nav-link :href="route('admin.dashboard')">

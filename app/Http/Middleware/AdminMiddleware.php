@@ -10,13 +10,11 @@ class AdminMiddleware
     public function handle($request, Closure $next)
     {
         if (!Auth::check()) {
-            return redirect('/login');
+            return redirect()->route('login');
         }
 
-        if (Auth::user()->is_admin != 1) {
-            return redirect('/dashboard')->withErrors([
-                'error' => '管理者のみアクセスできます'
-            ]);
+        if (!Auth::user()->is_admin) {
+            abort(403, '管理者のみアクセス可能です');
         }
 
         return $next($request);

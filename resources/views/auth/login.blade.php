@@ -27,6 +27,7 @@
                 <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
                     @csrf
 
+                    <!-- 電話番号 -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2 ml-1">
                             登録した電話番号
@@ -36,17 +37,28 @@
                                placeholder="例：09012345678" required>
                     </div>
 
+                    <!-- 部屋番号 -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2 ml-1">
-                            お部屋番号（3ケタ）
+                            お部屋番号
                         </label>
-                        <input type="text" name="room_number" maxlength="3" pattern="\d{3}" 
+                        <input type="text" name="room_number" 
                                class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-orange-300 focus:bg-white focus:outline-none transition-all text-lg" 
-                               placeholder="101" required>
+                               placeholder="例：101" required>
+                    </div>
+
+                    <!-- 暗証番号 -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2 ml-1">
+                            暗証番号
+                        </label>
+                        <input type="password" name="password" 
+                               class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-orange-300 focus:bg-white focus:outline-none transition-all text-lg" 
+                               placeholder="例：1234" required>
                     </div>
 
                     <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-200 transition-transform active:scale-95 text-lg">
-                        集会所へ入る
+                        ログイン
                     </button>
                 </form>
 

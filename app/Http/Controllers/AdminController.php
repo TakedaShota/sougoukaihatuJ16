@@ -2,48 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-    // 管理者トップページ
+    // 管理者トップ
     public function index()
     {
         return view('admin.dashboard');
     }
 
-    // 承認待ちユーザー一覧
+    // 承認待ち一覧
     public function pending()
     {
-        $users = User::where('is_admin', 0)
-                     ->where('is_approved', 0)
-                     ->get();
+        $users = User::where('is_admin', false)
+            ->where('is_approved', false)
+            ->get();
 
         return view('admin.pending', compact('users'));
     }
 
-    // ユーザー承認
+    // 承認
     public function approve($id)
     {
         $user = User::findOrFail($id);
-        $user->is_approved = 1;
+        $user->is_approved = true;
         $user->save();
 
-        return back()->with('message', 'ユーザーを承認しました。');
+        return back()->with('message', 'ユーザーを承認しました');
     }
 
-    // ユーザー却下
+    // 却下
     public function reject($id)
     {
         $user = User::findOrFail($id);
         $user->delete();
 
-        return back()->with('message', 'ユーザーを削除しました。');
+        return back()->with('message', 'ユーザーを削除しました');
     }
 
-    // ログ画面 ⭐ 修正ポイント
+    // ログ
     public function logs()
     {
         $logs = DB::table('logs')

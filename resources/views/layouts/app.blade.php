@@ -14,7 +14,11 @@
 </head>
 <body class="bg-gray-100">
     <div class="min-h-screen bg-gray-100">
-        @include('layouts.navigation')
+
+        <!-- ナビゲーション -->
+        @include('layouts.navigation', [
+            'showThreadsLink' => auth()->check() && auth()->user()->is_approved
+        ])
 
         <main>
             @yield('content')

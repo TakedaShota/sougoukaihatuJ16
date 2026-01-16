@@ -10,6 +10,6 @@ class ThreadPolicy
     // 投稿削除可能か
     public function delete(User $user, Thread $thread)
     {
-        return $user->id === $thread->user_id;
+        return $user->id === $thread->user_id || $user->is_admin;
     }
 }

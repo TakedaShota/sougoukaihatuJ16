@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
 use App\Models\Thread;
 use App\Models\Comment;
 use App\Policies\ThreadPolicy;
@@ -12,7 +11,7 @@ use App\Policies\CommentPolicy;
 class AuthServiceProvider extends ServiceProvider
 {
     /**
-     * The policy mappings for the application.
+     * ポリシーの対応表
      *
      * @var array<class-string, class-string>
      */
@@ -22,7 +21,7 @@ class AuthServiceProvider extends ServiceProvider
     ];
 
     /**
-     * Register any authentication / authorization services.
+     * 認可サービスの登録
      */
     public function boot(): void
     {

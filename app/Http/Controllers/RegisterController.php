@@ -21,7 +21,7 @@ class RegisterController extends Controller
             'name'        => 'required|string|max:255',
             'phone'       => ['required','digits:11','unique:users,phone'], // 11桁固定
             'room_number' => ['required','digits:3'],                        // 3桁固定
-            'password'    => 'required|confirmed|min:8',
+            'password'    => 'required|digits:4|confirmed',
         ]);
 
         User::create([

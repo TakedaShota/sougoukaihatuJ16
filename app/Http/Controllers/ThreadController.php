@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Thread;
 use App\Models\Comment;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ThreadController extends Controller
@@ -23,19 +23,6 @@ class ThreadController extends Controller
     }
 
     /**
-     * スレッド詳細
-     */
-    public function show(Thread $thread)
-    {
-        $comments = Comment::where('thread_id', $thread->id)
-            ->whereNull('parent_id')
-            ->latest()
-            ->get();
-
-        return view('threads.show', compact('thread', 'comments'));
-    }
-
-    /**
      * スレッド作成画面
      */
     public function create()
@@ -44,13 +31,13 @@ class ThreadController extends Controller
     }
 
     /**
-     * スレッド保存
+     * スレッド保存（※1つだけ）
      */
     public function store(Request $request)
     {
         $request->validate([
-            'title'           => 'required|string|max:255',
-            'body'            => 'required|string',
+            'title'           => 'required|max:255',
+            'body'            => 'required',
             'image'           => 'nullable|image|max:2048',
             'enable_interest' => 'nullable|boolean',
         ]);
@@ -73,51 +60,76 @@ class ThreadController extends Controller
     }
 
     /**
-     * 編集画面
+     * スレッド詳細
      */
-    public function edit(Thread $thread)
+    public function show(Thread $thread)
     {
-        return view('threads.edit', compact('thread'));
+        $comments = Comment::where('thread_id', $thread->id)
+            ->whereNull('parent_id')
+            ->latest()
+            ->get();
+
+        $hasInterested = Auth::check()
+            ? $thread->interestedUsers()
+                ->where('user_id', Auth::id())
+                ->exists()
+            : false;
+
+        return view('threads.show', compact(
+            'thread',
+            'comments',
+            'hasInterested'
+        ));
     }
 
     /**
-     * 更新
-     */
-    public function update(Request $request, Thread $thread)
-    {
-        $request->validate([
-            'title' => 'required|max:255',
-            'body'  => 'required',
-        ]);
-
-        $thread->update($request->only('title', 'body'));
-
-        return redirect()->route('threads.show', $thread);
-    }
-
-    /**
-     * 削除
+     * 🗑 スレッド削除（投稿者本人のみ）
      */
     public function destroy(Thread $thread)
     {
-        $this->authorize('delete', $thread);
+        if ($thread->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $thread->delete();
 
-        return redirect()->route('threads.index');
+        return redirect()
+            ->route('threads.index')
+            ->with('success', '投稿を削除しました');
     }
 
     /**
-     * 興味あり
+     * ❤️ 興味あり ON / OFF（Ajaxトグル）
      */
     public function interest(Thread $thread)
     {
         if (!$thread->enable_interest) {
-            return back();
+            return response()->json(['error' => true], 403);
         }
 
-        $thread->increment('interest_count');
+        $user = Auth::user();
 
-        return back();
+        if ($thread->user_id === $user->id) {
+            return response()->json(['error' => true], 403);
+        }
+
+        $already = $thread->interestedUsers()
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($already) {
+            $thread->interestedUsers()->detach($user->id);
+            $thread->decrement('interest_count');
+            $liked = false;
+        } else {
+            $thread->interestedUsers()->attach($user->id);
+            $thread->increment('interest_count');
+            $liked = true;
+        }
+
+        return response()->json([
+            'liked' => $liked,
+            'count' => $thread->interest_count,
+        ]);
     }
 }
