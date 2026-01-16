@@ -82,7 +82,7 @@ class ThreadController extends Controller
             'body'    => $request->body,
             'user_id' => Auth::id(),
             'image'   => $imagePath,                 // 画像パス
-            'enable_interest' => $request->enable_interest, // 興味ありボタンの表示設定(1 or 0)
+            'enable_interest' => $request->has('enable_interest'), // 興味ありボタンの表示設定(1 or 0)
         ]);
 
         return redirect()->route('threads.index');

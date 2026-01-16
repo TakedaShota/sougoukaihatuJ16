@@ -14,6 +14,8 @@ class Thread extends Model
         'body',
         'user_id',
         'image',
+        'enable_interest',
+        'interest_count',
     ];
 
     public function user()
@@ -25,4 +27,8 @@ class Thread extends Model
     {
         return $this->hasMany(Comment::class)->with('replies');
     }
+
+    protected $casts = [
+        'enable_interest' => 'boolean',
+    ];
 }
