@@ -7,6 +7,12 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
+    {{-- ▼▼▼ これがあのボタンを強制的に消すためのコードです ▼▼▼ --}}
+    <style>
+        .phpdebugbar { display: none !important; }
+    </style>
+    {{-- ▲▲▲ ここまで ▲▲▲ --}}
+
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 

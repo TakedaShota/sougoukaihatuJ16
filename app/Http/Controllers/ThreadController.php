@@ -5,16 +5,21 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Thread;
 use App\Models\Comment;
+use App\Models\InterestRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate; // 👈 Gateファサード読み込み
 
 class ThreadController extends Controller
 {
     /**
-     * スレッド一覧
+     * スレッド一覧（1ページ6件）
      */
     public function index()
     {
-        $threads = Thread::with('user')->latest()->paginate(10);
+        $threads = Thread::with('user')
+            ->latest()
+            ->paginate(6);
+
         return view('threads.index', compact('threads'));
     }
 
@@ -32,7 +37,16 @@ class ThreadController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('threads.show', compact('thread', 'comments'));
+        // このスレッドに対する「自分の興味あり」の状態（未送信なら null）
+        $interest = null;
+
+        if (Auth::check() && Auth::id() !== $thread->user_id) {
+            $interest = InterestRequest::where('thread_id', $thread->id)
+                ->where('from_user_id', Auth::id())
+                ->first();
+        }
+
+        return view('threads.show', compact('thread', 'comments', 'interest'));
     }
 
     /**
@@ -44,19 +58,31 @@ class ThreadController extends Controller
     }
 
     /**
-     * スレッド保存処理
+     * スレッド保存処理（★画像と興味あり設定に対応）
      */
     public function store(Request $request)
     {
+        // ① バリデーション
         $request->validate([
             'title' => 'required|string|max:255',
             'body'  => 'required|string',
+            'image' => 'nullable|image|max:2048', // 画像は任意、最大2MB
         ]);
 
+        // ② 画像アップロード処理
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            // storage/app/public/threads フォルダに保存
+            $imagePath = $request->file('image')->store('threads', 'public');
+        }
+
+        // ③ データベースに保存
         Thread::create([
             'title'   => $request->title,
             'body'    => $request->body,
             'user_id' => Auth::id(),
+            'image'   => $imagePath,                 // 画像パス
+            'enable_interest' => $request->enable_interest, // 興味ありボタンの表示設定(1 or 0)
         ]);
 
         return redirect()->route('threads.index');
@@ -90,7 +116,9 @@ class ThreadController extends Controller
      */
     public function destroy(Thread $thread)
     {
-        $this->authorize('delete', $thread);
+        // Policyを使って権限チェック（本人以外は削除不可）
+        Gate::authorize('delete', $thread);
+        
         $thread->delete();
 
         return redirect()->route('threads.index');

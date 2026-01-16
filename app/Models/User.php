@@ -21,6 +21,10 @@ class User extends Authenticatable
         'room_number',
         'interests',
         'avatar',
+        // ▼ 今回のプロフィール編集機能用に追加
+        'image',
+        'introduction',
+        // ▲ 追加ここまで
         'is_admin',
         'is_approved',
     ];

@@ -13,6 +13,7 @@ class Thread extends Model
         'title',
         'body',
         'user_id',
+        'image',
     ];
 
     public function user()
